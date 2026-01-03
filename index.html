@@ -1,50 +1,102 @@
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Primera Página - Sebas</title>
+    <title>Prueba de Reacción</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Estilos básicos para centrar el contenido */
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
+        body {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.1s ease;
+        }
+        .game-screen {
+            height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            background-color: #f0f2f5; /* Un color de fondo suave */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        /* Estilo del letrero */
-        .letrero {
-            background-color: #ffffff;
-            padding: 2rem 4rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: 2px solid #007bff;
-        }
-
-        h1 {
-            color: #333;
-            font-size: 3rem;
-            margin: 0;
+            justify-content: center;
+            cursor: pointer;
             text-align: center;
-        }
-
-        .highlight {
-            color: #ff5200;
+            padding: 20px;
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-800 text-white font-sans">
 
-    <div class="letrero">
-        <h1>Hola <span class="highlight">Sebas</span></h1>
+    <div id="game-container" class="game-screen">
+        <div id="icon-container" class="mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-timer"><path d="M10 2h4"/><path d="M12 14v-4"/><path d="M4 13a8 8 0 0 1 8-7 8 8 0 1 1-5.3 14L4 17.6"/><path d="M9 17H4v5"/></svg>
+        </div>
+        <h1 id="status-text" class="text-3xl md:text-5xl font-bold mb-4">¡Prueba tu Reacción!</h1>
+        <p id="instruction-text" class="text-xl opacity-80">Haz clic en cualquier lugar para empezar</p>
+        <div id="result-text" class="mt-8 text-4xl font-mono hidden"></div>
     </div>
 
+    <script>
+        const container = document.getElementById('game-container');
+        const statusText = document.getElementById('status-text');
+        const instructionText = document.getElementById('instruction-text');
+        const resultText = document.getElementById('result-text');
+        
+        let state = 'START'; // START, WAITING, READY, RESULT
+        let startTime;
+        let timeoutId;
+
+        function startGame() {
+            state = 'WAITING';
+            document.body.className = 'bg-blue-500 text-white font-sans';
+            statusText.innerText = 'Espera al color ROJO...';
+            instructionText.innerText = 'No hagas clic todavía';
+            resultText.classList.add('hidden');
+
+            // Tiempo aleatorio entre 2 y 5 segundos
+            const delay = Math.floor(Math.random() * 3000) + 2000;
+
+            timeoutId = setTimeout(() => {
+                state = 'READY';
+                document.body.className = 'bg-red-600 text-white font-sans';
+                statusText.innerText = '¡HAZ CLIC AHORA!';
+                startTime = performance.now();
+            }, delay);
+        }
+
+        function handleInteraction() {
+            if (state === 'START' || state === 'RESULT') {
+                startGame();
+            } 
+            else if (state === 'WAITING') {
+                // El usuario hizo clic antes de tiempo
+                clearTimeout(timeoutId);
+                state = 'RESULT';
+                document.body.className = 'bg-yellow-500 text-slate-900 font-sans';
+                statusText.innerText = '¡Demasiado pronto!';
+                instructionText.innerText = 'Haz clic para intentar de nuevo';
+            } 
+            else if (state === 'READY') {
+                // El usuario hizo clic correctamente
+                const endTime = performance.now();
+                const reactionTime = Math.round(endTime - startTime);
+                state = 'RESULT';
+                document.body.className = 'bg-green-500 text-white font-sans';
+                statusText.innerText = '¡Buen trabajo!';
+                instructionText.innerText = 'Haz clic para jugar otra vez';
+                resultText.innerText = `${reactionTime} ms`;
+                resultText.classList.remove('hidden');
+            }
+        }
+
+        // Soporte para clic y toque en móviles
+        container.addEventListener('mousedown', (e) => {
+            if (e.button === 0) handleInteraction();
+        });
+
+        container.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Previene el doble tap zoom
+            handleInteraction();
+        }, { passive: false });
+
+    </script>
 </body>
 </html>
